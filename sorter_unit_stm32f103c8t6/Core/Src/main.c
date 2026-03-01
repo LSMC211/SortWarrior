@@ -19,6 +19,7 @@
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
 #include "i2c.h"
+#include "tim.h"
 #include "usart.h"
 #include "gpio.h"
 
@@ -94,11 +95,20 @@ int main(void)
   MX_I2C1_Init();
   MX_USART1_UART_Init();
   MX_I2C2_Init();
+  MX_TIM2_Init();
+  MX_TIM3_Init();
   /* USER CODE BEGIN 2 */
+
+  HAL_TIM_Encoder_Start(&htim2, TIM_CHANNEL_ALL);
+  HAL_TIM_PWM_Start(&htim3, TIM_CHANNEL_1);
+
+  HAL_GPIO_WritePin(M1A_GPIO_Port, M1A_Pin, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(M1B_GPIO_Port, M1B_Pin, GPIO_PIN_SET);
+  TIM3->CCR1 = 10000;
 
   // Start UART recieving
   HAL_UART_Receive_IT(&huart1,uart_rx_buffer,1);
-  
+  /*
   if(tcs3472_init(&hi2c2)==HAL_OK)
   {
     uart_tx_buffer[0] = 0x67;
@@ -111,16 +121,14 @@ int main(void)
   }
 
   uint16_t colors[4];
-
+  */
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
   while (1)
   {
-    tcs3472_read_colors(&hi2c2, colors);
-    uart_tx_buffer[0] = colors[0];
-    HAL_UART_Transmit(&huart1, uart_tx_buffer, 1, 100);
+    
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
