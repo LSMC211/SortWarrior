@@ -95,6 +95,6 @@ HAL_StatusTypeDef tcs3472_read_colors(I2C_HandleTypeDef *hi2c, uint16_t *colors)
     colors[3] = (uint16_t)rx_data[6]|((uint16_t)rx_data[7]<<8);
 
 
-    // If 
+    // If
     return HAL_OK;
 }

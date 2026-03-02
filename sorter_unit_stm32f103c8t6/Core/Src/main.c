@@ -26,6 +26,8 @@
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 #include "tcs3472.h"
+
+#include <stdlib.h>
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -75,9 +77,7 @@ int main(void)
   /* USER CODE END 1 */
 
   /* MCU Configuration--------------------------------------------------------*/
-
-  /* Reset of all peripherals, Initializes the Flash interface and the Systick. */
-  HAL_Init();
+  /* Reset of all peripherals, Initializes the Flash interface and the Systick. */  HAL_Init();
 
   /* USER CODE BEGIN Init */
 
@@ -97,14 +97,18 @@ int main(void)
   MX_I2C2_Init();
   MX_TIM2_Init();
   MX_TIM3_Init();
+  MX_TIM1_Init();
   /* USER CODE BEGIN 2 */
 
   HAL_TIM_Encoder_Start(&htim2, TIM_CHANNEL_ALL);
   HAL_TIM_PWM_Start(&htim3, TIM_CHANNEL_1);
 
   HAL_GPIO_WritePin(M1A_GPIO_Port, M1A_Pin, GPIO_PIN_RESET);
-  HAL_GPIO_WritePin(M1B_GPIO_Port, M1B_Pin, GPIO_PIN_SET);
-  TIM3->CCR1 = 10000;
+  HAL_GPIO_WritePin(M1B_GPIO_Port, M1B_Pin, GPIO_PIN_RESET);
+  TIM3->CCR1 = 0;
+
+  uint16_t min_threshold = 3000;
+  uint16_t max_threshold = 65535;
 
   // Start UART recieving
   HAL_UART_Receive_IT(&huart1,uart_rx_buffer,1);
@@ -122,13 +126,52 @@ int main(void)
 
   uint16_t colors[4];
   */
+
+  float motor_pid_setpoint = 288;
+  float motor_pid_err = 0;
+  float motor_pid_err_prev = 0;
+  float motor_val = 0;
+  float motor_p = 0;
+  float motor_i = 0;
+  float motor_d = 0;
+  float motor_dt = 0;
+  uint16_t prev_tim_val = 0;
+
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
   while (1)
   {
-    
+    motor_pid_err = motor_pid_setpoint-TIM2->CNT;
+    motor_dt = HAL_GetTick() - prev_tim_val;
+    motor_p = motor_pid_err;
+    motor_i += motor_pid_err * motor_dt;
+    motor_d = (motor_pid_err - motor_pid_err_prev) / motor_dt;
+    motor_val = 500*motor_p + 0*motor_i + 3*motor_d;
+    motor_pid_err_prev = motor_pid_err;
+    prev_tim_val = HAL_GetTick();
+
+    if(motor_val > 0)
+    {
+      HAL_GPIO_WritePin(M1A_GPIO_Port, M1A_Pin, GPIO_PIN_SET);
+      HAL_GPIO_WritePin(M1B_GPIO_Port, M1B_Pin, GPIO_PIN_RESET);
+    }
+    else if(motor_val < 0)
+    {
+      HAL_GPIO_WritePin(M1A_GPIO_Port, M1A_Pin, GPIO_PIN_RESET);
+      HAL_GPIO_WritePin(M1B_GPIO_Port, M1B_Pin, GPIO_PIN_SET);
+    }
+    else
+    {
+      HAL_GPIO_WritePin(M1A_GPIO_Port, M1A_Pin, GPIO_PIN_RESET);
+      HAL_GPIO_WritePin(M1B_GPIO_Port, M1B_Pin, GPIO_PIN_RESET);
+    }
+    motor_val = abs(motor_val);
+    if(motor_val > max_threshold) motor_val = max_threshold;
+    else if(motor_val < min_threshold) motor_val = min_threshold;
+    TIM3->CCR1 = (uint16_t)motor_val;
+    HAL_Delay(1);
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
