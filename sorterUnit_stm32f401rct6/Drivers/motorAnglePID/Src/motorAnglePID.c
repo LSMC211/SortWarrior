@@ -5,8 +5,8 @@
 typedef struct {
     float setpoint;
     float errPrev;
-    float prevTime;
-    float prevZeroCrossingTime;
+    uint32_t prevTime;
+    uint32_t prevZeroCrossingTime;
     bool prevIsZero;
 } PIDstate_TypeDef;
 
@@ -28,12 +28,16 @@ void angleMotorInit(MotorHandle_TypeDef *motor, PIDsettings_TypeDef *pid) {
     PIDsettings = *pid;
     MotorHandle = *motor;
 
-
-    ticksInMs = (SystemCoreClock / (MotorHandle.timeTimer->PSC + 1)) / 1000;
+    *(MotorHandle.encoderCNT) = 32768;
+    PIDstate.setpoint = 32768;
 }
 
 void motorSetAngle(float angle) {
     PIDstate.setpoint = angle * MotorHandle.ppr / 360.0f;
+}
+
+void motorAddAngle(float angle) {
+    PIDstate.setpoint += angle * MotorHandle.ppr / 360.0f;
 }
 
 void setMotorSpeed(int32_t speed) {

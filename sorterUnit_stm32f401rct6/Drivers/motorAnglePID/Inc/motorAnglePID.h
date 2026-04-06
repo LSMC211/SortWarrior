@@ -25,4 +25,5 @@ typedef struct {
 void angleMotorInit(MotorHandle_TypeDef *motor, PIDsettings_TypeDef *pid);
 void setMotorSpeed(int32_t speed);
 void motorSetAngle(float angle);
+void motorAddAngle(float angle);
 bool angleMotorTick();

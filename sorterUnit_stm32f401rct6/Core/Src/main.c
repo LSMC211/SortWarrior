@@ -19,7 +19,6 @@
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
 #include "i2c.h"
-#include "stm32f4xx_hal_gpio.h"
 #include "tim.h"
 #include "usart.h"
 #include "gpio.h"
@@ -121,21 +120,25 @@ int main(void)
     .dirPinA = GPIO_PIN_3,
     .dirPinB = GPIO_PIN_4,
     .encoderCNT = &htim2.Instance->CNT,
-    .ppr = 432,
+    .ppr = 864.0f,
     .timeTimer = TIM1,
     .minPwmValue = 4000,
     .maxPwmValue = 65535,
   };
 
   PIDsettings_TypeDef pidSettings = {
-    .Kp = 1000.0f,
-    .Ki = 0.0f,
-    .Kd = 0.0f,
+    .Kp = 1000,
+    .Ki = 0,
+    .Kd = 100000,
     .msZeroTimeout = 75
   };
 
   angleMotorInit(&motorHandle, &pidSettings);
-  motorSetAngle(90);
+  
+  for(uint8_t i=0;i<3;i++) {
+    motorAddAngle(120.0f);
+    while(!angleMotorTick());
+  }
 
   /* USER CODE END 2 */
 
@@ -143,13 +146,7 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   while (1)
   {
-    if(angleMotorTick()) {
-      HAL_GPIO_WritePin(LED_GPIO_Port, LED_Pin, GPIO_PIN_RESET);
-    }
-    else {
-      HAL_GPIO_WritePin(LED_GPIO_Port, LED_Pin, GPIO_PIN_SET);
-    }
-
+    angleMotorTick();
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
