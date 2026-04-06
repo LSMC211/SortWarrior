@@ -19,6 +19,7 @@
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
 #include "i2c.h"
+#include "stm32f4xx_hal.h"
 #include "tim.h"
 #include "usart.h"
 #include "gpio.h"
@@ -82,7 +83,7 @@ int main(void)
   /* MCU Configuration--------------------------------------------------------*/
 
   /* Reset of all peripherals, Initializes the Flash interface and the Systick. */
-  HAL_Init();
+   HAL_Init();
 
   /* USER CODE BEGIN Init */
 
@@ -127,10 +128,11 @@ int main(void)
   };
 
   PIDsettings_TypeDef pidSettings = {
-    .Kp = 1000,
-    .Ki = 0,
-    .Kd = 100000,
-    .msZeroTimeout = 75
+    .Kp = 1000.0f,
+    .Ki = 0.0f,
+    .Kd = 10.0f,
+    .msZeroTimeout = 100,
+    .regulationDelay = 10
   };
 
   angleMotorInit(&motorHandle, &pidSettings);

@@ -20,6 +20,7 @@ typedef struct {
     float Ki;
     float Kd;
     uint16_t msZeroTimeout;
+    uint16_t regulationDelay;
 } PIDsettings_TypeDef;
 
 void angleMotorInit(MotorHandle_TypeDef *motor, PIDsettings_TypeDef *pid);

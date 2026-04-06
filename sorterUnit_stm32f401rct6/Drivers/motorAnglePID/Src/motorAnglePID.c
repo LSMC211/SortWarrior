@@ -65,6 +65,7 @@ void setMotorSpeed(int32_t speed) {
     *(MotorHandle.pwmCCR) = speed;
 }
 
+uint32_t currentTime = 0;
 float dt = 0;
 float encoderVal = 0;
 float motorP = 0;
@@ -74,32 +75,37 @@ float motorPIDoutput = 0;
 
 
 bool angleMotorTick() {
-    dt = (MotorHandle.timeTimer->CNT - PIDstate.prevTime);
+    currentTime = HAL_GetTick();
 
-    encoderVal = (float)(*MotorHandle.encoderCNT);
+    dt = currentTime-PIDstate.prevTime;
+    if(dt>=PIDsettings.regulationDelay) {
 
-    motorP = PIDstate.setpoint - encoderVal;
-    motorI += motorP * dt;
-    motorD = (motorP - PIDstate.errPrev) / dt;
+        encoderVal = (float)(*MotorHandle.encoderCNT);
 
-    motorPIDoutput = PIDsettings.Kp * motorP + PIDsettings.Ki * motorI + PIDsettings.Kd * motorD;
-    if(motorPIDoutput>65535) motorPIDoutput = 65535;
-    else if(motorPIDoutput<-65535) motorPIDoutput = -65535;
+        motorP = PIDstate.setpoint - encoderVal;
+        motorI += motorP * dt;
+        motorD = (motorP - PIDstate.errPrev) / dt;
 
-    if(motorPIDoutput==0) {
-        if(!PIDstate.prevIsZero) {
-            PIDstate.prevZeroCrossingTime = HAL_GetTick();
+        motorPIDoutput = PIDsettings.Kp * motorP + PIDsettings.Ki * motorI + PIDsettings.Kd * motorD;
+        if(motorPIDoutput>65535) motorPIDoutput = 65535;
+        else if(motorPIDoutput<-65535) motorPIDoutput = -65535;
+
+        if(motorPIDoutput==0) {
+            if(!PIDstate.prevIsZero) {
+                PIDstate.prevZeroCrossingTime = HAL_GetTick();
+            }
+            PIDstate.prevIsZero = true;
         }
-        PIDstate.prevIsZero = true;
-    }
-    else {
-        PIDstate.prevIsZero = false;
-    }
+        else {
+            PIDstate.prevIsZero = false;
+        }
 
-    setMotorSpeed(motorPIDoutput);
+        setMotorSpeed(motorPIDoutput);
 
-    PIDstate.errPrev = motorP;
-    PIDstate.prevTime = MotorHandle.timeTimer->CNT;
+        PIDstate.errPrev = motorP;
+        PIDstate.prevTime = currentTime;
+    }
+    
     
     if(HAL_GetTick() - PIDstate.prevZeroCrossingTime >= PIDsettings.msZeroTimeout && PIDstate.prevZeroCrossingTime!=0 && PIDstate.prevIsZero) {
         return true;
