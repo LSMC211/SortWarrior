@@ -19,7 +19,7 @@ if(NOT CMAKE_BUILD_TYPE)
 endif()
 
 # Set the project name
-set(CMAKE_PROJECT_NAME sorter_unit_stm32f103c8t6)
+set(CMAKE_PROJECT_NAME sorterUnit_stm32f401rct6)
 
 # Enable compile command to ease indexing with e.g. clangd
 set(CMAKE_EXPORT_COMPILE_COMMANDS TRUE)
@@ -54,7 +54,6 @@ target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE
     # Add user defined include paths
     Drivers/tcs3472/Inc
     Drivers/motorAnglePID/Inc
-    
 )
 
 # Add project symbols (macros)

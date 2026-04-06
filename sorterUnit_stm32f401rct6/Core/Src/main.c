@@ -19,17 +19,19 @@
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
 #include "i2c.h"
-#include "stm32f1xx_hal_gpio.h"
+#include "stm32f4xx_hal_gpio.h"
 #include "tim.h"
 #include "usart.h"
 #include "gpio.h"
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
+
 #include <stdlib.h>
 
 #include "tcs3472.h"
 #include "motorAnglePID.h"
+
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -79,7 +81,9 @@ int main(void)
   /* USER CODE END 1 */
 
   /* MCU Configuration--------------------------------------------------------*/
-  /* Reset of all peripherals, Initializes the Flash interface and the Systick. */  HAL_Init();
+
+  /* Reset of all peripherals, Initializes the Flash interface and the Systick. */
+  HAL_Init();
 
   /* USER CODE BEGIN Init */
 
@@ -94,16 +98,16 @@ int main(void)
 
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
-  MX_I2C1_Init();
-  MX_USART1_UART_Init();
   MX_I2C2_Init();
+  MX_TIM1_Init();
   MX_TIM2_Init();
   MX_TIM3_Init();
-  MX_TIM1_Init();
-
+  MX_USART1_UART_Init();
   /* USER CODE BEGIN 2 */
 
   // Initialize timers
+  HAL_TIM_Base_Start(&htim1);
+
   HAL_TIM_Encoder_Start(&htim2, TIM_CHANNEL_ALL);
   HAL_TIM_PWM_Start(&htim3, TIM_CHANNEL_1);
 
@@ -117,22 +121,21 @@ int main(void)
     .dirPinA = GPIO_PIN_3,
     .dirPinB = GPIO_PIN_4,
     .encoderCNT = &htim2.Instance->CNT,
-    .ppr = 330,
+    .ppr = 432,
     .timeTimer = TIM1,
-    .minPwmValue = 1000,
-    .maxPwmValue = 65535
+    .minPwmValue = 4000,
+    .maxPwmValue = 65535,
   };
 
   PIDsettings_TypeDef pidSettings = {
-    .Kp = 1.0f,
+    .Kp = 1000.0f,
     .Ki = 0.0f,
     .Kd = 0.0f,
-    .msZeroTimeout = 5
+    .msZeroTimeout = 75
   };
 
-  HAL_GPIO_WritePin(motorHandle.dirPort, motorHandle.dirPinA, GPIO_PIN_SET);
-  HAL_GPIO_WritePin(motorHandle.dirPort, motorHandle.dirPinB, GPIO_PIN_RESET);
-  *motorHandle.pwmCCR = 20000;
+  angleMotorInit(&motorHandle, &pidSettings);
+  motorSetAngle(90);
 
   /* USER CODE END 2 */
 
@@ -140,7 +143,13 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   while (1)
   {
-    
+    if(angleMotorTick()) {
+      HAL_GPIO_WritePin(LED_GPIO_Port, LED_Pin, GPIO_PIN_RESET);
+    }
+    else {
+      HAL_GPIO_WritePin(LED_GPIO_Port, LED_Pin, GPIO_PIN_SET);
+    }
+
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
@@ -157,16 +166,22 @@ void SystemClock_Config(void)
   RCC_OscInitTypeDef RCC_OscInitStruct = {0};
   RCC_ClkInitTypeDef RCC_ClkInitStruct = {0};
 
+  /** Configure the main internal regulator output voltage
+  */
+  __HAL_RCC_PWR_CLK_ENABLE();
+  __HAL_PWR_VOLTAGESCALING_CONFIG(PWR_REGULATOR_VOLTAGE_SCALE2);
+
   /** Initializes the RCC Oscillators according to the specified parameters
   * in the RCC_OscInitTypeDef structure.
   */
   RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSE;
   RCC_OscInitStruct.HSEState = RCC_HSE_ON;
-  RCC_OscInitStruct.HSEPredivValue = RCC_HSE_PREDIV_DIV1;
-  RCC_OscInitStruct.HSIState = RCC_HSI_ON;
   RCC_OscInitStruct.PLL.PLLState = RCC_PLL_ON;
   RCC_OscInitStruct.PLL.PLLSource = RCC_PLLSOURCE_HSE;
-  RCC_OscInitStruct.PLL.PLLMUL = RCC_PLL_MUL9;
+  RCC_OscInitStruct.PLL.PLLM = 25;
+  RCC_OscInitStruct.PLL.PLLN = 168;
+  RCC_OscInitStruct.PLL.PLLP = RCC_PLLP_DIV2;
+  RCC_OscInitStruct.PLL.PLLQ = 4;
   if (HAL_RCC_OscConfig(&RCC_OscInitStruct) != HAL_OK)
   {
     Error_Handler();

@@ -1,11 +1,17 @@
 from lib.vision.img_process import ImgProcess
 import cv2
 import numpy as np
+import time
 
 improc = ImgProcess()
 cam = cv2.VideoCapture(0)
 ret, frame = cam.read()
+
+start = time.time()
 pucks_info = improc.detect_pucks(frame,np.array([100, 100, 100]), np.array([130, 255, 255]))
+end = time.time()
+print(end-start)
+
 result_frame = frame.copy()
 for puck in pucks_info:
     x1,y1,x2,y2,width,height,sim = puck["x1"],puck["y1"],puck["x2"],puck["y2"],puck["width"],puck["height"], puck["sim"]
