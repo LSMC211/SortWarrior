@@ -83,7 +83,7 @@ int main(void)
   /* MCU Configuration--------------------------------------------------------*/
 
   /* Reset of all peripherals, Initializes the Flash interface and the Systick. */
-   HAL_Init();
+  HAL_Init();
 
   /* USER CODE BEGIN Init */
 
@@ -121,18 +121,18 @@ int main(void)
     .dirPinA = GPIO_PIN_3,
     .dirPinB = GPIO_PIN_4,
     .encoderCNT = &htim2.Instance->CNT,
-    .ppr = 864.0f,
+    .ppr = 660.0f,
     .timeTimer = TIM1,
-    .minPwmValue = 4000,
+    .minPwmValue = 5000,
     .maxPwmValue = 65535,
   };
 
   PIDsettings_TypeDef pidSettings = {
-    .Kp = 1000.0f,
-    .Ki = 0.0f,
-    .Kd = 10.0f,
-    .msZeroTimeout = 100,
-    .regulationDelay = 10
+    .Kp = 2700.0f,
+    .Ki = 17.5f,
+    .Kd = 50000.0f,
+    .msZeroTimeout = 25,
+    .regulationDelay = 5
   };
 
   angleMotorInit(&motorHandle, &pidSettings);
@@ -140,6 +140,7 @@ int main(void)
   for(uint8_t i=0;i<3;i++) {
     motorAddAngle(120.0f);
     while(!angleMotorTick());
+    HAL_Delay(50);
   }
 
   /* USER CODE END 2 */

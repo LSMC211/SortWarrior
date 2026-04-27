@@ -83,10 +83,19 @@ bool angleMotorTick() {
         encoderVal = (float)(*MotorHandle.encoderCNT);
 
         motorP = PIDstate.setpoint - encoderVal;
-        motorI += motorP * dt;
-        motorD = (motorP - PIDstate.errPrev) / dt;
+        if(motorP!=0){
+            if (abs(motorPIDoutput) < 65535 && abs(motorPIDoutput) > 0) {
+                motorI += motorP * dt;
+            }
+            motorD = (motorP - PIDstate.errPrev) / dt;
 
-        motorPIDoutput = PIDsettings.Kp * motorP + PIDsettings.Ki * motorI + PIDsettings.Kd * motorD;
+            motorPIDoutput = PIDsettings.Kp * motorP + PIDsettings.Ki * motorI + PIDsettings.Kd * motorD;
+        }
+
+        else {
+            motorPIDoutput = 0;
+        }
+
         if(motorPIDoutput>65535) motorPIDoutput = 65535;
         else if(motorPIDoutput<-65535) motorPIDoutput = -65535;
 
